@@ -23,6 +23,7 @@ var filePath = {
 };
 
 var mailSubject = {
+  'Auth' : '[고파운더]이메일 인증 메일입니다.',
   'Profile' : '님이 작성하신 고프로필에 새 댓글이 달렸습니다. 지금 확인해보세요!',
   'Project' : '님이 작성하신 고프로젝트에 새 댓글이 달렸습니다. 지금 확인해보세요!',
   'Feed' : '님이 고커뮤니티에 작성하신 게시물에 새 답글이 달렸습니다. 지금 확인해보세요!',
@@ -102,16 +103,23 @@ function sendAuthMail(req, res){
       
       // result[0] : eamil
       // result[1] : confirm_token
+      //개발 환경이면 email 을 개인 메일로 지정
+
+      if(process.env.NODE_ENV != 'production'){
+        result[0] = 'gofa.seong@gmail.com';
+        console.log('개발서버 ---- ' + result[0] + '으로 메일을 보냈습니다');        
+      }
+  
       let data = {
         email : result[0],
         confirm_token : result[1]
       };
-
+        
       jadeCompiler.compile(filePath.Auth, data, function(error, html){
       
-        mailer.sendMail('gitseong@naver.com', '노드 인증 메일 테스트',html, function(err, success){
+        mailer.sendMail(data.email, mailSubject.Auth, html, function(err, success){
           if(err){
-            throw new Error('Problem sending email to: ' +'gitseong@naver.com');
+            throw new Error('Problem sending email to: ' +data.email);
           }
         });
       });
@@ -126,158 +134,6 @@ function sendCustomMail(req, res){
 
 }
 
-function sendMail(req, res, type){
-
-  let query;
-  let data;
-  
-  if(typeof req.query.id == 'undefined') query = 'select * from users';
-  else query = 'select email from users where id ='+id;
-  
-  pool.getConnection((error, connection)=>{
-    if(error){
-      res.json({"code" : 100});
-      return;
-    }
-    connection.query(query, (err, rows)=>{
-      if(err){
-        res.json({"code" : 101});
-        return;
-      }
-     
-      let data = {
-        contents : mailMessages[type],
-       
-      }
-      //인증메일
-      if(type == 'Auth'){
-        data = {
-          contents : messages
-        }
-      }
-      //프로젝트, 프로필, 피드, 댓글
-      else if(typeof type == 'undefined'){
-        data = {
-
-        }
-      }
-      //커스텀 알람
-      else{
-        data ={
-
-        }
-      }
-     
-      for(let i in rows){
-        // eamilAddress = rows[i].email
-        let data = {
-
-        }
-        jadeCompiler.compile(filePath[type], data, function(err ,html){
-
-       });
-
-       
-      }
-      return rows;
-    });
-  });
-}
-
-function getFilePath(type){
-  
-}
-// 쿼리스트링으로 넘오온 유저의 id 값으로 
-// 유저의 이메일 정보를 알아온다
-function getEmailList(id){
-  
-  let query;
-  
-  if(typeof id == 'undefined') query = 'select * from users';
-  else query = 'select email from users where id ='+id;
-  
-  pool.getConnection((error, connection)=>{
-    if(error){
-      res.json({"code" : 100});
-      return null;
-    }
-    connection.query(query, (err, rows)=>{
-      if(err){
-        res.json({"code" : 101});
-        return null;
-      }
-      for(let i in rows){
-        console.log(rows[i].email);
-      }
-      return rows;
-    });
-  });
-}
-// 프로젝트, 프로필, 피드, 인증, 댓글의 경우 
-// 해당유저 한명에게만 보내면 되므로 sendMail(id) 함수를 이용(id는 받을사람의 user id)
-function sendMail(id){
-
-  let query = 'select email from users where id = '+id;
-  pool.getConnection((error, connection)=>{
-    if(error){
-      res.json({"code" : 100});
-      return ;
-    }
-    connection.query(query, (err, rows)=>{
-      if(err){
-        res.json({"code" : 101});
-        return ;
-      }
-      for(let i in rows){
-        console.log(rows[i].email);
-      }   
-      // 실제 메일을 보내는 함수는 주석처리
-      // let data = makeMailData(rows[i].email);
-      // mailgun.messages().send(data, function (error, body) {
-      //   console.log(rows[0].email);        
-      // });
-    });
-  });
- 
-};
-
-// 커스텀 메일의 경우 모든사람에게 보내야 하므로 sendAll()함수를 사용
-function sendMailAll(){
-  
-  let query = 'select email from users';
-  
-  pool.getConnection((error, connection)=>{
-    if(error){
-      res.json({"code" : 100});
-      return ;
-    }
-    connection.query(query, (err, rows)=>{
-      if(err){
-        res.json({"code" : 101});
-        return ;
-      }
-      for(let i in rows){
-        console.log(rows[i].email);
-      }   
-      // 실제 메일을 보내는 함수는 주석처리
-      // let data = makeMailData(rows[i].email);
-      // mailgun.messages().send(data, function (error, body) {
-      //   console.log(rows[0].email);        
-      // });
-    });
-  });
-};
-
-function makeMailData(email){
-  var data = {
-    from: '고파운더 <gofoundermanager@gofounder.net>',
-    to: email,
-    subject: 'Hello',
-    text: 'Testing some Mailgun awesomness!'
-  };
-
-  return data;
-}
 /* GET users listing. */
 router.get('/', function(req, res, next) {
   
