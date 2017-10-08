@@ -9,7 +9,7 @@ var config = require('./config');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
-var mail = require('./routes/emailHandler');
+var mail = require('./routes/email');
 var app = express();
 
 // view engine setup
