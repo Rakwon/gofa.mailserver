@@ -15,6 +15,10 @@ var pool = mysql.createPool({
 /* GET users listing. */
 router.get('/', function(req, res, next) {
   
+
+  res.json({"result" : "OK"});
+  for(var i = 0; i<100000000; console.log(++i));
+  
   pool.getConnection(function(error, connection){
     if(error){
       res.json({"code": 100, "status" : "Error in connection Database"});
@@ -28,7 +32,6 @@ router.get('/', function(req, res, next) {
       }
     });
   });
-  res.send('respond with a resource');
 });
 
 module.exports = router;
